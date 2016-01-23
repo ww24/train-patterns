@@ -1,0 +1,14 @@
+{
+  "name": "kis-client",
+  "version": "1.0.0",
+  "description": "kis client",
+  "main": "kis.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ww24",
+  "license": "MIT",
+  "dependencies": {
+    "request-promise": "^2.0.0"
+  }
+}
