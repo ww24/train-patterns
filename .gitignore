@@ -5,5 +5,9 @@ node_modules
 secret.json
 
 images/*
+images_*
+models/*
 
 !.gitkeep
+
+*.pyc

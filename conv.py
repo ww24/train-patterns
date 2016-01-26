@@ -270,7 +270,7 @@ if __name__ == "__main__":
   flags.DEFINE_integer("batch_size", 10, "Batch size."
                        "Must divide evenly into the dataset sizes.")
   flags.DEFINE_string("train_dir", "data", "Directory to put the training data.")
-  flags.DEFINE_integer("image_size", 32, "Image size.")
+  flags.DEFINE_integer("image_size", 64, "Image size.")
 
   NUM_CLASSES = 2
   TOWER_NAME = "tower"

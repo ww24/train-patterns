@@ -12,3 +12,10 @@
 ├── secret.json  : for kis.js
 └── test.py      : 判定用スクリプト
 ```
+
+流れ
+----
+1. KIS Server から画像をダウンロード (kis.js)
+1. 64x64px に縮小 (resize.py)
+1. 学習 (conv.py)
+1. 作成された model.ckpt を用いて判定 (test.py)
