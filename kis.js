@@ -7,6 +7,7 @@ const secret = require("./secret.json");
 const image_dir = "images";
 const extension = ".png";
 const retry = 3;
+const concurrent = 4;
 
 const uuid = process.argv[2] || null;
 console.log("UUID:", uuid);
@@ -76,10 +77,17 @@ req({
   var index = 0;
   var counter = 0;
 
-  var promises = [
-    tasks.slice(0, Math.ceil(tasks.length / 2)),
-    tasks.slice(Math.ceil(tasks.length / 2))
-  ].map(task_list => {
+  var limit = Math.ceil(tasks.length / concurrent);
+  var tasks_list = []
+  for (var i = 0; i < concurrent; i++) {
+    if (i < concurrent - 1) {
+      tasks_list[i] = tasks.slice(limit * i, limit * (i + 1));
+    } else {
+      tasks_list[i] = tasks.slice(limit * i);
+    }
+  }
+
+  var promises = tasks_list.map(task_list => {
     return task_list.reduce((a, b) => {
       var item = list[index++];
       var out = [];
