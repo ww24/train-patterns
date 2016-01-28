@@ -33,7 +33,8 @@ if __name__ == '__main__':
   init = tf.initialize_all_variables()
   sess.run(init)
 
-  saver.restore(sess, "models/mohemohe.ckpt")
+  # saver.restore(sess, "models/mohemohe.ckpt")
+  saver.restore(sess, "model.ckpt")
   # ckpt = tf.train.get_checkpoint_state("./models")
   # if ckpt and ckpt.model_checkpoint_path:
   #   saver.restore(sess, ckpt.model_checkpoint_path)
@@ -44,6 +45,6 @@ if __name__ == '__main__':
     res = sess.run(logits, feed_dict={ 
       images_placeholder: [test_images[i]],
       keep_prob: 1.0})
-    print "本人: %.4f%%, 他人: %.4f%%"%(res[0][0] * 100, res[0][1] * 100)
-    print res[0]
+    # print "本人: %.4f%%, 他人: %.4f%%"%(res[0][0] * 100, res[0][1] * 100)
+    # print res[0]
     print np.argmax(res[0])

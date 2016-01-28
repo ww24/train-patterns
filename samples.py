@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+# coding: utf-8
 
 import sys
 import random
 import commands
+
+OTHER_RATE = 1.0
 
 if len(sys.argv) < 2:
   raise NameError("usage samples.py <size>")
@@ -30,13 +33,21 @@ other_list = map(lambda item: "1 %s"%item, other_list)
 
 print "------------"
 
-other_list = random.sample(other_list, len(my_list))
-file_list = my_list + other_list
-random.shuffle(file_list)
-print "file list:", len(file_list)
-
 size = int(sys.argv[1])
-train_files = random.sample(file_list, size)
+
+# 学習用ファイルリスト
+train_files = random.sample(my_list, size)
+train_files += random.sample(other_list, int(size * OTHER_RATE))
+
+# 試験用ファイルリスト
+test_files = [item for item in my_list if not (item in train_files)]
+other_list = [item for item in other_list if not (item in train_files)]
+test_files += random.sample(other_list, len(test_files))
+
+random.shuffle(train_files)
+random.shuffle(test_files)
+
+print "file:", len(train_files) + len(test_files)
 
 f = open("train.txt", "w")
 f.writelines([item + "\n" for item in train_files])
@@ -44,7 +55,6 @@ print "train files:", len(train_files)
 f.close()
 
 f = open("test.txt", "w")
-test_files = [item + "\n" for item in file_list if not (item in train_files)]
-f.writelines(test_files)
+f.writelines([item + "\n" for item in test_files])
 print "test files:", len(test_files)
 f.close()

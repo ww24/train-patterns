@@ -189,12 +189,12 @@ def open_list(name):
   return (images, labels)
 
 def main(_):
-  train_image, train_label = open_list(FLAGS.train)
-  test_image, test_label = open_list(FLAGS.test)
+  train_images, train_labels = open_list(FLAGS.train)
+  test_images, test_labels = open_list(FLAGS.test)
 
   with tf.Graph().as_default():
-    images_placeholder = tf.placeholder(tf.float32, shape=(None, IMAGE_PIXELS), name="images_placeholder")
-    labels_placeholder = tf.placeholder(tf.int32, shape=(None), name="labels_placeholder")
+    images_placeholder = tf.placeholder(tf.float32, shape=(FLAGS.batch_size, IMAGE_PIXELS), name="images_placeholder")
+    labels_placeholder = tf.placeholder(tf.int32, shape=(FLAGS.batch_size), name="labels_placeholder")
     keep_prob = tf.placeholder(tf.float32, name="keep_prob")
 
     with tf.name_scope("inference"):
@@ -214,48 +214,64 @@ def main(_):
     summary_op = tf.merge_all_summaries()
     summary_writer = tf.train.SummaryWriter(FLAGS.train_dir, graph_def=sess.graph_def)
 
+    def calculate_accuracy(type_str, step):
+      images = []
+      labels = []
+      
+      if type_str == "train":
+        images = train_images
+        labels = train_labels
+      else:
+        images = test_images
+        labels = test_labels
+
+      accuracy_mean = 0.0
+      summary_all = {}
+      for i in xrange(len(images) / FLAGS.batch_size):
+        batch = FLAGS.batch_size * i
+        accuracy, summary_str = sess.run([acc, summary_op], feed_dict={
+          images_placeholder: images[batch:batch + FLAGS.batch_size],
+          labels_placeholder: labels[batch:batch + FLAGS.batch_size],
+          keep_prob: 1.0})
+        accuracy_mean += accuracy
+      
+        summary = tf.Summary()
+        summary.ParseFromString(summary_str)
+        for key, val in enumerate(summary.value):
+          val.tag = type_str + "/" + val.tag
+          if val.tag in summary_all:
+            summary_all[val.tag] += val.simple_value
+          else:
+            summary_all[val.tag] = val.simple_value
+
+      loop_size = math.ceil(len(images) / FLAGS.batch_size)
+
+      summary = tf.Summary()
+      for s in summary_all:
+        summary.value.add(tag=s, simple_value=summary_all[s] / loop_size)
+      summary_writer.add_summary(summary, global_step=step)
+      
+      accuracy_mean /= loop_size
+      print "step %d, %s accuracy %g"%(step, type_str, accuracy_mean)
+
     # And then after everything is built, start the training loop.
     for step in range(FLAGS.max_steps):
-      for i in range(len(train_image) / FLAGS.batch_size):
+      for i in xrange(len(train_images) / FLAGS.batch_size):
         batch = FLAGS.batch_size * i
         sess.run(train_op, feed_dict={
-          images_placeholder: train_image[batch:batch+FLAGS.batch_size],
-          labels_placeholder: train_label[batch:batch+FLAGS.batch_size],
+          images_placeholder: train_images[batch:batch + FLAGS.batch_size],
+          labels_placeholder: train_labels[batch:batch + FLAGS.batch_size],
           keep_prob: 0.5})
 
       with tf.name_scope("train") as scope:
         # if step % 100 == 0:
-        train_accuracy, summary_str = sess.run([acc, summary_op], feed_dict={
-          images_placeholder: train_image,
-          labels_placeholder: train_label,
-          keep_prob: 1.0})
-        print "step %d, training accuracy %g"%(step, train_accuracy)
-
-        summary = tf.Summary()
-        summary.ParseFromString(summary_str)
-        for val in summary.value:
-          val.tag = "train/" + val.tag
-        summary_writer.add_summary(summary, step)
+        calculate_accuracy(scope[:-1].split("_")[0], step)
 
       with tf.name_scope("test") as scope:
         # if step % 100 == 0:
-        test_acculacy, summary_str = sess.run([acc, summary_op], feed_dict={
-          images_placeholder: test_image,
-          labels_placeholder: test_label,
-          keep_prob: 1.0})
-        print "test accuracy %g"%test_acculacy
+        calculate_accuracy(scope[:-1].split("_")[0], step)
 
-        summary = tf.Summary()
-        summary.ParseFromString(summary_str)
-        for val in summary.value:
-          val.tag = "test/" + val.tag
-        summary_writer.add_summary(summary, step)
-
-  test_acculacy = sess.run(acc, feed_dict={
-    images_placeholder: test_image,
-    labels_placeholder: test_label,
-    keep_prob: 1.0})
-  print "test accuracy %g"%test_acculacy
+      summary_writer.flush()
 
   save_path = saver.save(sess, "model.ckpt")
 
