@@ -256,6 +256,15 @@ def main(_):
 
     # And then after everything is built, start the training loop.
     for step in range(FLAGS.max_steps):
+      # shuffle list
+      image_label = []
+      for i, v in enumerate(train_images):
+        image_label += [[v, train_labels[i]]]
+      random.shuffle(image_label)
+      train_images = [item[0] for item in image_label]
+      train_labels = [item[1] for item in image_label]
+
+      # train
       for i in xrange(len(train_images) / FLAGS.batch_size):
         batch = FLAGS.batch_size * i
         sess.run(train_op, feed_dict={
@@ -263,16 +272,17 @@ def main(_):
           labels_placeholder: train_labels[batch:batch + FLAGS.batch_size],
           keep_prob: 0.5})
 
+      # calculate accuracy for train data
       with tf.name_scope("train") as scope:
         # if step % 100 == 0:
         calculate_accuracy(scope[:-1].split("_")[0], step)
 
+      # calculate accuracy for test data
       with tf.name_scope("test") as scope:
         # if step % 100 == 0:
         calculate_accuracy(scope[:-1].split("_")[0], step)
 
       summary_writer.flush()
-
   save_path = saver.save(sess, "model.ckpt")
 
 

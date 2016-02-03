@@ -5,7 +5,7 @@ import sys
 import random
 import commands
 
-OTHER_RATE = 1.0
+OTHER_RATE = 1.5
 
 if len(sys.argv) < 2:
   raise NameError("usage samples.py <size>")
